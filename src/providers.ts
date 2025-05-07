@@ -5,7 +5,7 @@ declare global {
 }
 
 // Contract details - update with your deployed contract
-const CONTRACT_ADDRESS = "YOUR_DEPLOYED_CONTRACT_ADDRESS";
+const CONTRACT_ADDRESS = "0x5F735462088a08a99b348897969740f2Fdf60373";
 const CLAIM_FUNCTION_SIGNATURE = "0x4e71d92d"; // Function signature for 'claim()'
 const RESET_CLAIM_FUNCTION_SIGNATURE = "0xb6a0e26a"; // Function signature for 'resetClaim(address)'
 

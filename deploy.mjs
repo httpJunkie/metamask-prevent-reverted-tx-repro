@@ -95,6 +95,11 @@ const contractABI = [
   }
 ];
 
+function getFunctionSignature(functionName) {
+    const hash = ethers.keccak256(ethers.toUtf8Bytes(functionName));
+    return hash.substring(0, 10); // Take the first 4 bytes (8 hex chars) + '0x' prefix
+  }  
+
 async function main() {
   // Check if private key is available
   if (!process.env.PRIVATE_KEY) {
@@ -129,15 +134,30 @@ async function main() {
     // Wait for confirmation
     await contract.waitForDeployment();
     
-    // Get contract address
-    const contractAddress = await contract.getAddress();
-    console.log(`Contract deployed to: ${contractAddress}`);
-    
-    // Save contract address to a file for easy access
-    fs.writeFileSync(
-      'contractAddress.json', 
-      JSON.stringify({ address: contractAddress }, null, 2)
-    );
+  // Get contract address
+  const contractAddress = await contract.getAddress();
+  console.log(`Contract deployed to: ${contractAddress}`);
+  
+  // Calculate and display function signatures
+  const claimSignature = getFunctionSignature("claim()");
+  const resetClaimSignature = getFunctionSignature("resetClaim(address)");
+  
+  console.log("\nFunction signatures for providers.ts:");
+  console.log(`const CONTRACT_ADDRESS = "${contractAddress}";`);
+  console.log(`const CLAIM_FUNCTION_SIGNATURE = "${claimSignature}"; // Function signature for 'claim()'`);
+  console.log(`const RESET_CLAIM_FUNCTION_SIGNATURE = "${resetClaimSignature}"; // Function signature for 'resetClaim(address)'`);
+  
+  // Save contract info to a file
+  fs.writeFileSync(
+    'contractAddress.json', 
+    JSON.stringify({
+      address: contractAddress,
+      functions: {
+        claim: claimSignature,
+        resetClaim: resetClaimSignature
+      }
+    }, null, 2)
+  );
     
     console.log('Contract address saved to contractAddress.json');
     
