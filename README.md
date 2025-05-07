@@ -4,8 +4,8 @@
 
 1. **Install & Configure**
 ```bash
-   npm install
-   # Create .env with PRIVATE_KEY and INFURA_KEY
+npm install
+# Create .env with PRIVATE_KEY and INFURA_KEY
 ```
 2. **Deploy Contract**
 ```bash
