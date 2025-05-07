@@ -3,8 +3,8 @@ import { listProviders } from "./providers.ts"
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
-    <h1>Transaction Leak Test</h1>
-    <p>This app tests for leaked transactions when using Smart Transactions</p>
+    <h1>Transaction Reverted Test</h1>
+    <p>This app tests for reverted transactions when using Smart Transactions</p>
     
     <div id="providerButtons"></div>
     <div id="accountDisplay" style="margin-top: 10px; display: none"></div>
