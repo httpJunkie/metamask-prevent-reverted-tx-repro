@@ -96,9 +96,9 @@ const contractABI = [
 ];
 
 function getFunctionSignature(functionName) {
-    const hash = ethers.keccak256(ethers.toUtf8Bytes(functionName));
-    return hash.substring(0, 10); // Take the first 4 bytes (8 hex chars) + '0x' prefix
-  }  
+  const hash = ethers.keccak256(ethers.toUtf8Bytes(functionName));
+  return hash.substring(0, 10); // Take the first 4 bytes (8 hex chars) + '0x' prefix
+}  
 
 async function main() {
   // Check if private key is available
@@ -109,7 +109,6 @@ async function main() {
 
   try {
     // Connect to Sepolia network using Infura
-    // You can also try Alchemy or other providers if this doesn't work
     const provider = new ethers.JsonRpcProvider(`https://sepolia.infura.io/v3/${process.env.INFURA_KEY}`);
     
     // Create a wallet with your private key
@@ -134,30 +133,30 @@ async function main() {
     // Wait for confirmation
     await contract.waitForDeployment();
     
-  // Get contract address
-  const contractAddress = await contract.getAddress();
-  console.log(`Contract deployed to: ${contractAddress}`);
-  
-  // Calculate and display function signatures
-  const claimSignature = getFunctionSignature("claim()");
-  const resetClaimSignature = getFunctionSignature("resetClaim(address)");
-  
-  console.log("\nFunction signatures for providers.ts:");
-  console.log(`const CONTRACT_ADDRESS = "${contractAddress}";`);
-  console.log(`const CLAIM_FUNCTION_SIGNATURE = "${claimSignature}"; // Function signature for 'claim()'`);
-  console.log(`const RESET_CLAIM_FUNCTION_SIGNATURE = "${resetClaimSignature}"; // Function signature for 'resetClaim(address)'`);
-  
-  // Save contract info to a file
-  fs.writeFileSync(
-    'contractAddress.json', 
-    JSON.stringify({
-      address: contractAddress,
-      functions: {
-        claim: claimSignature,
-        resetClaim: resetClaimSignature
-      }
-    }, null, 2)
-  );
+    // Get contract address
+    const contractAddress = await contract.getAddress();
+    console.log(`Contract deployed to: ${contractAddress}`);
+    
+    // Calculate and display function signatures
+    const claimSignature = getFunctionSignature("claim()");
+    const resetClaimSignature = getFunctionSignature("resetClaim(address)");
+    
+    console.log("\nFunction signatures for providers.ts:");
+    console.log(`const CONTRACT_ADDRESS = "${contractAddress}";`);
+    console.log(`const CLAIM_FUNCTION_SIGNATURE = "${claimSignature}"; // Function signature for 'claim()'`);
+    console.log(`const RESET_CLAIM_FUNCTION_SIGNATURE = "${resetClaimSignature}"; // Function signature for 'resetClaim(address)'`);
+    
+    // Save contract info to a file
+    fs.writeFileSync(
+      'contractAddress.json', 
+      JSON.stringify({
+        address: contractAddress,
+        functions: {
+          claim: claimSignature,
+          resetClaim: resetClaimSignature
+        }
+      }, null, 2)
+    );
     
     console.log('Contract address saved to contractAddress.json');
     
@@ -172,36 +171,6 @@ main()
   .then((result) => {
     if (result.success) {
       console.log('Deployment successful!');
-      
-      // Use the actual contract address from the result
-      const deployedAddress = result.address;
-      
-      console.log("\nTest the contract directly in browser console:");
-      console.log(`
-// Test code to run in browser console:
-const provider = new ethers.providers.Web3Provider(window.ethereum);
-const signer = provider.getSigner();
-const abi = ${JSON.stringify(contractABI)};
-const contract = new ethers.Contract("${deployedAddress}", abi, signer);
-
-// Reset claim status for your account:
-async function reset() {
-  const tx = await contract.resetClaim(await signer.getAddress());
-  console.log("Reset tx sent:", tx.hash);
-  const receipt = await tx.wait();
-  console.log("Reset complete:", receipt);
-}
-reset();
-
-// Try to claim:
-async function claim() {
-  const tx = await contract.claim();
-  console.log("Claim tx sent:", tx.hash);
-  const receipt = await tx.wait();
-  console.log("Claim complete:", receipt);
-}
-claim();
-      `);
     } else {
       console.error('Deployment failed');
     }

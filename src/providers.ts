@@ -5,7 +5,7 @@ declare global {
 }
 
 // Contract details - update with your deployed contract
-const CONTRACT_ADDRESS = "0x6A9164cdf0a9C4209ea3F2e49d13BEf226A51820";
+const CONTRACT_ADDRESS = "0x052Dd16E715f926D75387b8e6dc345359b4b963A";
 const CLAIM_FUNCTION_SIGNATURE = "0x4e71d92d"; // Function signature for 'claim()'
 const RESET_CLAIM_FUNCTION_SIGNATURE = "0x700805e3"; // Function signature for 'resetClaim(address)'
 
@@ -71,8 +71,7 @@ async function sendClaimTransaction() {
       from: selectedAccount,
       to: CONTRACT_ADDRESS,
       data: CLAIM_FUNCTION_SIGNATURE,
-      gas: '0x30000', // Increased gas
-      // Removed maxFeePerGas and maxPriorityFeePerGas
+      gas: '0x6000', // Increased to 24,576
     };
 
     // Send claim transaction
@@ -119,15 +118,12 @@ async function sendDuplicateClaimTransaction() {
   if (statusDiv) statusDiv.innerHTML += '<br>🔄 Sending duplicate claim transaction...';
 
   try {
-    // Prepare identical claim transaction
+    // Prepare identical claim transaction - match the same format as sendClaimTransaction
     const txParams = {
       from: selectedAccount,
       to: CONTRACT_ADDRESS,
       data: CLAIM_FUNCTION_SIGNATURE,
-      value: '0x0', // zero ETH
-      gas: '0x186A0', // 100,000 gas
-      maxFeePerGas: '0x2540BE400', // 10 GWEI
-      maxPriorityFeePerGas: '0x3B9ACA00' // 1 GWEI
+      gas: '0x6000', // Increased to 24,576
     };
 
     // Log for debugging
@@ -189,12 +185,12 @@ async function resetClaimStatus() {
     console.log('Reset transaction data:', txData);
     console.log('Selected account:', selectedAccount);
 
+    // Let's use a MASSIVE gas limit to ensure it's not a gas issue
     const txParams = {
       from: selectedAccount,
       to: CONTRACT_ADDRESS,
       data: txData,
-      gas: '0x30000', // Increased gas limit matching the working example
-      // Remove the maxFeePerGas and maxPriorityFeePerGas for now
+      gas: '0x7A120', // 500,000 gas - extreme overkill
     };
 
     // Send reset transaction

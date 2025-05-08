@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Contract Test</title>
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    button { padding: 10px; margin: 5px; }
+    #status { margin-top: 20px; padding: 10px; border: 1px solid #ccc; min-height: 100px; }
+  </style>
+</head>
+<body>
+  <h1>Simple Contract Test</h1>
+  <div>
+    <button id="connectBtn">Connect Wallet</button>
+    <div id="account"></div>
+  </div>
+  <div style="margin-top: 20px;">
+    <button id="resetBtn" disabled>Reset Claim</button>
+    <button id="claimBtn" disabled>Claim</button>
+    <button id="duplicateBtn" disabled>Duplicate Claim</button>
+  </div>
+  <div id="status">Status will appear here</div>
+
+  <script>
+    // Contract details
+    const CONTRACT_ADDRESS = "0x052Dd16E715f926D75387b8e6dc345359b4b963A";
+    const CLAIM_FUNCTION = "0x4e71d92d";
+    const RESET_FUNCTION = "0x700805e3";
+    
+    let userAccount = null;
+
+    // Connect wallet
+    document.getElementById('connectBtn').addEventListener('click', async () => {
+      try {
+        // Check if ethereum is available (MetaMask)
+        if (typeof window.ethereum === 'undefined') {
+          document.getElementById('status').innerText = 'MetaMask not found. Please install MetaMask.';
+          return;
+        }
+        
+        // Request account access
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        userAccount = accounts[0];
+        
+        // Show account and enable buttons
+        document.getElementById('account').innerText = `Connected: ${userAccount}`;
+        document.getElementById('resetBtn').disabled = false;
+        document.getElementById('claimBtn').disabled = false;
+        
+        document.getElementById('status').innerText = 'Wallet connected!';
+      } catch (error) {
+        document.getElementById('status').innerText = `Error connecting: ${error.message}`;
+      }
+    });
+    
+    // Reset claim
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      if (!userAccount) return;
+      
+      try {
+        document.getElementById('status').innerText = 'Sending reset transaction...';
+        
+        // Encode address parameter
+        const addressParam = userAccount.substring(2).padStart(64, '0');
+        const data = `${RESET_FUNCTION}${addressParam}`;
+        
+        // Send transaction with very high gas limit
+        const txParams = {
+          from: userAccount,
+          to: CONTRACT_ADDRESS,
+          data: data,
+          gas: '0x55730', // 350,000 gas - way more than needed
+        };
+        
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [txParams]
+        });
+        
+        document.getElementById('status').innerText = `Reset transaction sent: ${txHash}`;
+      } catch (error) {
+        document.getElementById('status').innerText = `Reset error: ${error.message}`;
+      }
+    });
+    
+    // Claim
+    document.getElementById('claimBtn').addEventListener('click', async () => {
+      if (!userAccount) return;
+      
+      try {
+        document.getElementById('status').innerText = 'Sending claim transaction...';
+        
+        // Send transaction
+        const txParams = {
+          from: userAccount,
+          to: CONTRACT_ADDRESS,
+          data: CLAIM_FUNCTION,
+          gas: '0x55730', // 350,000 gas
+        };
+        
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [txParams]
+        });
+        
+        document.getElementById('status').innerText = `Claim transaction sent: ${txHash}`;
+        document.getElementById('duplicateBtn').disabled = false;
+      } catch (error) {
+        document.getElementById('status').innerText = `Claim error: ${error.message}`;
+      }
+    });
+    
+    // Duplicate claim
+    document.getElementById('duplicateBtn').addEventListener('click', async () => {
+      if (!userAccount) return;
+      
+      try {
+        const currentStatus = document.getElementById('status').innerText;
+        document.getElementById('status').innerText = `${currentStatus}\nSending duplicate claim...`;
+        
+        // Send identical transaction
+        const txParams = {
+          from: userAccount,
+          to: CONTRACT_ADDRESS,
+          data: CLAIM_FUNCTION,
+          gas: '0x55730', // 350,000 gas
+        };
+        
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [txParams]
+        });
+        
+        document.getElementById('status').innerText += `\nDuplicate claim sent: ${txHash}`;
+      } catch (error) {
+        document.getElementById('status').innerText += `\nDuplicate error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
