@@ -5,9 +5,9 @@ declare global {
 }
 
 // Contract details - update with your deployed contract
-const CONTRACT_ADDRESS = "0x6DC344F433c35758920B1275AD75A6F1B4B9abF9";
+const CONTRACT_ADDRESS = "0x2A6D0A893d2ce364F43D486fA2E272935dc0d34d";
 const CLAIM_FUNCTION_SIGNATURE = "0x4e71d92d"; // Function signature for 'claim()'
-const RESET_CLAIM_FUNCTION_SIGNATURE = "0x700805e3"; // Function signature for 'resetClaim(address)'
+const RESET_CLAIM_FUNCTION_SIGNATURE = "0xb6a0e26a"; // Function signature for 'resetClaim(address)'
 
 // Declare selectedProvider at the top level
 let selectedProvider: EIP1193Provider | null = null;
@@ -90,7 +90,7 @@ async function sendClaimTransaction() {
     }
     
     // Enable duplicate button once we have a pending transaction
-    const duplicateButton = document.getElementById('sendDuplicateClaimTx');
+    const duplicateButton = document.getElementById('sendDuplicateClaimTx') as HTMLButtonElement;
     if (duplicateButton) {
       duplicateButton.disabled = false;
       duplicateButton.classList.add('active');
@@ -184,10 +184,12 @@ async function resetClaimStatus() {
   if (statusDiv) statusDiv.innerHTML = '🔄 Resetting claim status...';
 
   try {
-    // Create resetClaim transaction with the user's address as parameter
-    // Encode the address parameter (padded to 32 bytes)
-    const encodedAddress = selectedAccount.substring(2).padStart(64, '0');
-    const txData = `${RESET_CLAIM_FUNCTION_SIGNATURE}${encodedAddress}`;
+    // Modified parameter encoding - address needs to be lowercase and without 0x prefix
+    const addressParam = selectedAccount.toLowerCase().substring(2).padStart(64, '0');
+    const txData = `${RESET_CLAIM_FUNCTION_SIGNATURE}${addressParam}`;
+    
+    console.log('Reset transaction data:', txData);
+    console.log('Selected account:', selectedAccount);
 
     const txParams = {
       from: selectedAccount,
@@ -213,7 +215,7 @@ async function resetClaimStatus() {
       pendingClaimTxHash = null;
       
       // Disable duplicate button
-      const duplicateButton = document.getElementById('sendDuplicateClaimTx');
+      const duplicateButton = document.getElementById('sendDuplicateClaimTx') as HTMLButtonElement;
       if (duplicateButton) {
         duplicateButton.disabled = true;
         duplicateButton.classList.remove('active');
@@ -272,7 +274,7 @@ async function monitorTransaction(txHash: string) {
           // If this was the pending claim and it succeeded, disable duplicate button
           if (txHash === pendingClaimTxHash && success) {
             pendingClaimTxHash = null;
-            const duplicateButton = document.getElementById('sendDuplicateClaimTx');
+            const duplicateButton = document.getElementById('sendDuplicateClaimTx') as HTMLButtonElement;
             if (duplicateButton) duplicateButton.disabled = true;
           }
         }
