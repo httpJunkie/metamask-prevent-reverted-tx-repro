@@ -5,9 +5,9 @@ declare global {
 }
 
 // Contract details - update with your deployed contract
-const CONTRACT_ADDRESS = "0x2A6D0A893d2ce364F43D486fA2E272935dc0d34d";
+const CONTRACT_ADDRESS = "0x6A9164cdf0a9C4209ea3F2e49d13BEf226A51820";
 const CLAIM_FUNCTION_SIGNATURE = "0x4e71d92d"; // Function signature for 'claim()'
-const RESET_CLAIM_FUNCTION_SIGNATURE = "0xb6a0e26a"; // Function signature for 'resetClaim(address)'
+const RESET_CLAIM_FUNCTION_SIGNATURE = "0x700805e3"; // Function signature for 'resetClaim(address)'
 
 // Declare selectedProvider at the top level
 let selectedProvider: EIP1193Provider | null = null;
@@ -66,15 +66,13 @@ async function sendClaimTransaction() {
   if (statusDiv) statusDiv.innerHTML = '🔄 Sending claim transaction...';
 
   try {
-    // Prepare claim transaction
+    // Prepare claim transaction - simplified like the console test
     const txParams = {
       from: selectedAccount,
       to: CONTRACT_ADDRESS,
       data: CLAIM_FUNCTION_SIGNATURE,
-      value: '0x0', // zero ETH
-      gas: '0x186A0', // 100,000 gas
-      maxFeePerGas: '0x2540BE400', // 10 GWEI
-      maxPriorityFeePerGas: '0x3B9ACA00' // 1 GWEI
+      gas: '0x30000', // Increased gas
+      // Removed maxFeePerGas and maxPriorityFeePerGas
     };
 
     // Send claim transaction
@@ -184,8 +182,8 @@ async function resetClaimStatus() {
   if (statusDiv) statusDiv.innerHTML = '🔄 Resetting claim status...';
 
   try {
-    // Modified parameter encoding - address needs to be lowercase and without 0x prefix
-    const addressParam = selectedAccount.toLowerCase().substring(2).padStart(64, '0');
+    // Use the exact same approach that worked in the console test
+    const addressParam = selectedAccount.substring(2).padStart(64, '0');
     const txData = `${RESET_CLAIM_FUNCTION_SIGNATURE}${addressParam}`;
     
     console.log('Reset transaction data:', txData);
@@ -195,10 +193,8 @@ async function resetClaimStatus() {
       from: selectedAccount,
       to: CONTRACT_ADDRESS,
       data: txData,
-      value: '0x0', // zero ETH
-      gas: '0x186A0', // 100,000 gas
-      maxFeePerGas: '0x2540BE400', // 10 GWEI
-      maxPriorityFeePerGas: '0x3B9ACA00' // 1 GWEI
+      gas: '0x30000', // Increased gas limit matching the working example
+      // Remove the maxFeePerGas and maxPriorityFeePerGas for now
     };
 
     // Send reset transaction
@@ -218,7 +214,6 @@ async function resetClaimStatus() {
       const duplicateButton = document.getElementById('sendDuplicateClaimTx') as HTMLButtonElement;
       if (duplicateButton) {
         duplicateButton.disabled = true;
-        duplicateButton.classList.remove('active');
       }
       
       // Monitor the reset transaction

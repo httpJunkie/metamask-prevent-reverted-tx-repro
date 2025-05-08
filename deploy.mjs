@@ -172,6 +172,36 @@ main()
   .then((result) => {
     if (result.success) {
       console.log('Deployment successful!');
+      
+      // Use the actual contract address from the result
+      const deployedAddress = result.address;
+      
+      console.log("\nTest the contract directly in browser console:");
+      console.log(`
+// Test code to run in browser console:
+const provider = new ethers.providers.Web3Provider(window.ethereum);
+const signer = provider.getSigner();
+const abi = ${JSON.stringify(contractABI)};
+const contract = new ethers.Contract("${deployedAddress}", abi, signer);
+
+// Reset claim status for your account:
+async function reset() {
+  const tx = await contract.resetClaim(await signer.getAddress());
+  console.log("Reset tx sent:", tx.hash);
+  const receipt = await tx.wait();
+  console.log("Reset complete:", receipt);
+}
+reset();
+
+// Try to claim:
+async function claim() {
+  const tx = await contract.claim();
+  console.log("Claim tx sent:", tx.hash);
+  const receipt = await tx.wait();
+  console.log("Claim complete:", receipt);
+}
+claim();
+      `);
     } else {
       console.error('Deployment failed');
     }
