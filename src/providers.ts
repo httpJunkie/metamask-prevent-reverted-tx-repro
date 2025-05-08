@@ -5,9 +5,9 @@ declare global {
 }
 
 // Contract details - update with your deployed contract
-const CONTRACT_ADDRESS = "0x5F735462088a08a99b348897969740f2Fdf60373";
+const CONTRACT_ADDRESS = "0x6DC344F433c35758920B1275AD75A6F1B4B9abF9";
 const CLAIM_FUNCTION_SIGNATURE = "0x4e71d92d"; // Function signature for 'claim()'
-const RESET_CLAIM_FUNCTION_SIGNATURE = "0xb6a0e26a"; // Function signature for 'resetClaim(address)'
+const RESET_CLAIM_FUNCTION_SIGNATURE = "0x700805e3"; // Function signature for 'resetClaim(address)'
 
 // Declare selectedProvider at the top level
 let selectedProvider: EIP1193Provider | null = null;
@@ -63,7 +63,7 @@ async function sendClaimTransaction() {
   }
 
   const statusDiv = document.getElementById('status');
-  if (statusDiv) statusDiv.innerHTML = 'Sending claim transaction...';
+  if (statusDiv) statusDiv.innerHTML = '🔄 Sending claim transaction...';
 
   try {
     // Prepare claim transaction
@@ -84,13 +84,17 @@ async function sendClaimTransaction() {
     }) as string;
 
     if (statusDiv) {
-      statusDiv.innerHTML = `<br>Claim transaction sent: ${pendingClaimTxHash}`;
-      statusDiv.innerHTML += `<br>Status: Pending`;
+      statusDiv.innerHTML = `<br>📤 Claim transaction sent: ${pendingClaimTxHash}`;
+      statusDiv.innerHTML += `<br>⏳ Status: Pending`;
+      console.log(`Claim transaction sent: ${pendingClaimTxHash}`);
     }
     
     // Enable duplicate button once we have a pending transaction
     const duplicateButton = document.getElementById('sendDuplicateClaimTx');
-    if (duplicateButton) duplicateButton.disabled = false;
+    if (duplicateButton) {
+      duplicateButton.disabled = false;
+      duplicateButton.classList.add('active');
+    }
 
     // Monitor transaction status
     monitorTransaction(pendingClaimTxHash);
@@ -99,9 +103,9 @@ async function sendClaimTransaction() {
     console.error('Transaction error:', error);
     if (statusDiv) {
       if (error instanceof Error) {
-        statusDiv.innerHTML += `<br>Error: ${error.message}`;
+        statusDiv.innerHTML += `<br>❌ Error: ${error.message}`;
       } else {
-        statusDiv.innerHTML += `<br>Error: ${String(error)}`;
+        statusDiv.innerHTML += `<br>❌ Error: ${String(error)}`;
       }
     }
   }
@@ -114,7 +118,7 @@ async function sendDuplicateClaimTransaction() {
   }
 
   const statusDiv = document.getElementById('status');
-  if (statusDiv) statusDiv.innerHTML += '<br>Sending duplicate claim transaction...';
+  if (statusDiv) statusDiv.innerHTML += '<br>🔄 Sending duplicate claim transaction...';
 
   try {
     // Prepare identical claim transaction
@@ -128,6 +132,12 @@ async function sendDuplicateClaimTransaction() {
       maxPriorityFeePerGas: '0x3B9ACA00' // 1 GWEI
     };
 
+    // Log for debugging
+    console.log('Attempting duplicate transaction while first is pending', {
+      pendingTx: pendingClaimTxHash,
+      featureFlag: 'extensionReturnTxHashAsap = true',
+    });
+
     // Send duplicate claim transaction
     const duplicateTxHash = await selectedProvider.request({
       method: 'eth_sendTransaction',
@@ -135,8 +145,10 @@ async function sendDuplicateClaimTransaction() {
     }) as string;
 
     if (statusDiv) {
-      statusDiv.innerHTML += `<br>Duplicate claim transaction sent: ${duplicateTxHash}`;
-      statusDiv.innerHTML += `<br>Status: Pending`;
+      statusDiv.innerHTML += `<br>📤 Duplicate claim transaction sent: ${duplicateTxHash}`;
+      statusDiv.innerHTML += `<br>⏳ Status: Pending`;
+      statusDiv.innerHTML += `<br>🚨 <strong>Issue detected:</strong> Duplicate transaction was accepted by MetaMask`;
+      console.log(`Duplicate transaction sent: ${duplicateTxHash}`);
     }
 
     // Monitor the duplicate transaction
@@ -146,9 +158,17 @@ async function sendDuplicateClaimTransaction() {
     console.error('Duplicate transaction error:', error);
     if (statusDiv) {
       if (error instanceof Error) {
-        statusDiv.innerHTML += `<br>Duplicate error: ${error.message}`;
+        statusDiv.innerHTML += `<br>❌ Duplicate error: ${error.message}`;
+        
+        // If the error contains specific words that indicate proper rejection
+        if (error.message.includes('NoClaimAvailable') || 
+            error.message.includes('already claimed') || 
+            error.message.includes('rejected') ||
+            error.message.includes('reverted')) {
+          statusDiv.innerHTML += `<br>✅ <strong>Correct behavior:</strong> MetaMask properly rejected the duplicate transaction`;
+        }
       } else {
-        statusDiv.innerHTML += `<br>Duplicate error: ${String(error)}`;
+        statusDiv.innerHTML += `<br>❌ Duplicate error: ${String(error)}`;
       }
     }
   }
@@ -161,7 +181,7 @@ async function resetClaimStatus() {
   }
 
   const statusDiv = document.getElementById('status');
-  if (statusDiv) statusDiv.innerHTML = 'Resetting claim status...';
+  if (statusDiv) statusDiv.innerHTML = '🔄 Resetting claim status...';
 
   try {
     // Create resetClaim transaction with the user's address as parameter
@@ -186,23 +206,30 @@ async function resetClaimStatus() {
     }) as string;
 
     if (statusDiv) {
-      statusDiv.innerHTML = `Claim status reset transaction sent: ${resetTxHash}`;
+      statusDiv.innerHTML = `📤 Claim status reset transaction sent: ${resetTxHash}`;
+      statusDiv.innerHTML += `<br>⏳ Status: Pending`;
       
       // Clear the pending transaction
       pendingClaimTxHash = null;
       
       // Disable duplicate button
       const duplicateButton = document.getElementById('sendDuplicateClaimTx');
-      if (duplicateButton) duplicateButton.disabled = true;
+      if (duplicateButton) {
+        duplicateButton.disabled = true;
+        duplicateButton.classList.remove('active');
+      }
+      
+      // Monitor the reset transaction
+      monitorTransaction(resetTxHash);
     }
 
   } catch (error: unknown) {
     console.error('Reset transaction error:', error);
     if (statusDiv) {
       if (error instanceof Error) {
-        statusDiv.innerHTML += `<br>Reset error: ${error.message}`;
+        statusDiv.innerHTML += `<br>❌ Reset error: ${error.message}`;
       } else {
-        statusDiv.innerHTML += `<br>Reset error: ${String(error)}`;
+        statusDiv.innerHTML += `<br>❌ Reset error: ${String(error)}`;
       }
     }
   }
@@ -215,7 +242,7 @@ async function monitorTransaction(txHash: string) {
   
   const checkReceipt = async () => {
     if (attempts >= maxAttempts) {
-      if (statusDiv) statusDiv.innerHTML += `<br>Transaction ${txHash.substring(0, 10)}... timed out after ${maxAttempts} checks`;
+      if (statusDiv) statusDiv.innerHTML += `<br>⏱️ Transaction ${txHash.substring(0, 10)}... timed out after ${maxAttempts} checks`;
       return;
     }
     
@@ -230,7 +257,17 @@ async function monitorTransaction(txHash: string) {
       if (receipt) {
         const success = (receipt as any).status === '0x1';
         if (statusDiv) {
-          statusDiv.innerHTML += `<br>Transaction ${txHash.substring(0, 10)}... ${success ? 'succeeded' : 'failed'}`;
+          if (success) {
+            statusDiv.innerHTML += `<br>✅ Transaction ${txHash.substring(0, 10)}... succeeded`;
+          } else {
+            statusDiv.innerHTML += `<br>❌ Transaction ${txHash.substring(0, 10)}... failed`;
+            
+            // Check if this is a duplicate transaction that failed
+            if (pendingClaimTxHash && txHash !== pendingClaimTxHash) {
+              statusDiv.innerHTML += `<br>ℹ️ <strong>Expected behavior:</strong> The duplicate claim should be rejected by MetaMask before reaching the network`;
+              statusDiv.innerHTML += `<br>🐞 <strong>Bug detected:</strong> Transaction was submitted to network despite being a duplicate claim`;
+            }
+          }
           
           // If this was the pending claim and it succeeded, disable duplicate button
           if (txHash === pendingClaimTxHash && success) {
@@ -245,7 +282,7 @@ async function monitorTransaction(txHash: string) {
       }
     } catch (error) {
       console.error('Error checking receipt:', error);
-      if (statusDiv) statusDiv.innerHTML += `<br>Error checking ${txHash.substring(0, 10)}...: ${error}`;
+      if (statusDiv) statusDiv.innerHTML += `<br>⚠️ Error checking ${txHash.substring(0, 10)}...: ${error}`;
       // Try again after a delay
       setTimeout(checkReceipt, 10000);
     }
